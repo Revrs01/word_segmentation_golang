@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"testGo/tools"
 	"unicode/utf8"
 )
 
@@ -70,5 +71,10 @@ func main() {
 		}
 		fmt.Println(i, e)
 	}
+
+	set := tools.NewSet()
+	set.Add("早上好")
+	set.Add("老頭")
+	fmt.Println(set.Contains("老頭"))
 
 }
