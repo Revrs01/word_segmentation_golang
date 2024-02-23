@@ -9,20 +9,25 @@ import (
 	"unicode/utf8"
 )
 
-func readFile() {
+type Tree struct {
+	Value       string
+	Left, Right *Tree
+}
+
+func readDictionary() *tools.Set {
 	file, err := os.Open("dict_no_space.txt")
-	var counter = 0
+	set := tools.NewSet()
 	if err == nil {
 		scanner := bufio.NewScanner(file)
 
 		for scanner.Scan() {
-			counter += 1
-			fmt.Println(scanner.Text())
+			set.Add(scanner.Text())
 		}
-		fmt.Println(counter)
+		return set
 	} else {
 		fmt.Println("error")
 	}
+	return nil
 }
 
 func wordSegmentation(subSentence string) {
@@ -36,13 +41,13 @@ func wordSegmentation(subSentence string) {
 	// you will get the segmented result
 }
 
-func main() {
-	// 早上好，現在我有Ice Cream，Mi2S還有個老頭喜歡BB
+func scanInput() string {
 	scanner := bufio.NewScanner(os.Stdin)
-	regex, _ := regexp.Compile("[A-Za-z0-9 ]+")
 	scanner.Scan()
-	sentence := scanner.Text()
-	fmt.Println()
+	return scanner.Text()
+}
+
+func convertToStringArray(regex *regexp.Regexp, sentence string) []string {
 	runeSlice := []rune(sentence)
 	matchesIndices := regex.FindAllStringIndex(sentence, -1)
 
@@ -63,11 +68,24 @@ func main() {
 		prefix = element[1]
 	}
 
-	for i, e := range result {
+	return result
+}
+
+func main() {
+	// 早上好，現在我有Ice Cream，Mi2S還有個老頭喜歡BB
+
+	dictionary := readDictionary()
+	fmt.Print(dictionary)
+	sentence := scanInput()
+	regex, _ := regexp.Compile("[A-Za-z0-9 ]+")
+
+	splitEnglishAndOtherLanguage := convertToStringArray(regex, sentence)
+	for i, e := range splitEnglishAndOtherLanguage {
 		if regex.MatchString(e) {
 			fmt.Println(i, "This is english or number or space")
 		} else {
 			// perform word segmentation
+			// segmentationResult := wordSegmentation(splitEnglishAndOtherLanguage)
 		}
 		fmt.Println(i, e)
 	}
