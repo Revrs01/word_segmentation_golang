@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"testGo/tools"
 	"unicode/utf8"
+	"wordSegmentation/tools"
 )
 
 type Tree struct {
@@ -107,11 +107,16 @@ func convertToStringArray(regex *regexp.Regexp, sentence string) []string {
 		prefix = element[1]
 	}
 
+	if prefix != len(runeSlice) {
+		result = append(result, string(runeSlice[prefix:]))
+	}
+
 	return result
 }
 
 func main() {
 	// 早上好，現在我有Ice Cream，Mi-2S還有個老頭喜歡BB。
+	// 大家好，我是盧文祥老師，我來自Mi-2S實驗室，我是一個超亮亮的老師，最喜歡帶著同學做沒有用的Project，然後不斷地改A改，超爽der
 
 	dictionary := readDictionary()
 	sentence := scanInput()

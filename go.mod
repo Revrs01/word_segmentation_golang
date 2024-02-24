@@ -1,3 +1,3 @@
-module testGo
+module wordSegmentation
 
 go 1.22
