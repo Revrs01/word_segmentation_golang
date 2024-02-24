@@ -30,7 +30,34 @@ func readDictionary() *tools.Set {
 	return nil
 }
 
-func wordSegmentation(subSentence string) {
+func wordSegmentation(subSentence string, dictionary *tools.Set, root *Tree) {
+	if len(subSentence) < 2 {
+		return
+	}
+	subSentenceSlice := []rune(subSentence)
+	var foundWord = false
+	for gramLength := len(subSentenceSlice); gramLength > 0; gramLength-- {
+		if foundWord == true || gramLength < 1 {
+			//root.Value = subSentence
+			break
+		}
+
+		for startIndex := 0; startIndex < len(subSentenceSlice)-gramLength+1; startIndex++ {
+			currentSubSentence := string(subSentenceSlice[startIndex : startIndex+gramLength])
+			//fmt.Println("currentWord: ", currentSubSentence)
+
+			if dictionary.Contains(currentSubSentence) {
+				//fmt.Println("splitIndex: ", startIndex, startIndex+gramLength, currentSubSentence)
+				root.Value = currentSubSentence
+				root.Left = &Tree{}
+				root.Right = &Tree{}
+				foundWord = true
+				wordSegmentation(string(subSentenceSlice[:startIndex]), dictionary, root.Left)
+				wordSegmentation(string(subSentenceSlice[startIndex+gramLength:]), dictionary, root.Right)
+				break
+			}
+		}
+	}
 	// use n-gram, build a tree
 	// if word found in dictionary, then make the current word as root
 	// and left subtree is string[:foundWordStartIndex]
@@ -45,6 +72,18 @@ func scanInput() string {
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	return scanner.Text()
+}
+
+func inOrderTraverseTree(root *Tree) {
+	if root == nil {
+		return
+	}
+
+	inOrderTraverseTree(root.Left)
+	if root.Value != "" {
+		fmt.Print(root.Value, " | ")
+	}
+	inOrderTraverseTree(root.Right)
 }
 
 func convertToStringArray(regex *regexp.Regexp, sentence string) []string {
@@ -72,27 +111,22 @@ func convertToStringArray(regex *regexp.Regexp, sentence string) []string {
 }
 
 func main() {
-	// 早上好，現在我有Ice Cream，Mi2S還有個老頭喜歡BB
+	// 早上好，現在我有Ice Cream，Mi-2S還有個老頭喜歡BB。
 
 	dictionary := readDictionary()
-	fmt.Print(dictionary)
 	sentence := scanInput()
-	regex, _ := regexp.Compile("[A-Za-z0-9 ]+")
+	regex, _ := regexp.Compile("[A-Za-z0-9 -]+")
 
 	splitEnglishAndOtherLanguage := convertToStringArray(regex, sentence)
-	for i, e := range splitEnglishAndOtherLanguage {
+	for _, e := range splitEnglishAndOtherLanguage {
 		if regex.MatchString(e) {
-			fmt.Println(i, "This is english or number or space")
+			fmt.Print(e, " | ")
 		} else {
 			// perform word segmentation
-			// segmentationResult := wordSegmentation(splitEnglishAndOtherLanguage)
+			segmentationTree := &Tree{}
+			wordSegmentation(e, dictionary, segmentationTree)
+			inOrderTraverseTree(segmentationTree)
 		}
-		fmt.Println(i, e)
+		//fmt.Println(i, len(e))
 	}
-
-	set := tools.NewSet()
-	set.Add("早上好")
-	set.Add("老頭")
-	fmt.Println(set.Contains("老頭"))
-
 }
