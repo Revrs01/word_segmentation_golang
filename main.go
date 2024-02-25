@@ -15,13 +15,23 @@ type Tree struct {
 }
 
 func readDictionary() *tools.Set {
-	file, err := os.Open("dict_no_space.txt")
+	mandarinDictionary, errZh := os.Open("dictionaries/Mandarin.txt")
+	taiwaneseDictionary, errTw := os.Open("dictionaries/Taiwanese.txt")
+	hakkaDictionary, errHk := os.Open("dictionaries/Hakka.txt")
 	set := tools.NewSet()
-	if err == nil {
-		scanner := bufio.NewScanner(file)
+	if errZh == nil && errTw == nil && errHk == nil {
+		scannerZh := bufio.NewScanner(mandarinDictionary)
+		scannerTw := bufio.NewScanner(taiwaneseDictionary)
+		scannerHk := bufio.NewScanner(hakkaDictionary)
 
-		for scanner.Scan() {
-			set.Add(scanner.Text())
+		for scannerZh.Scan() {
+			set.Add(scannerZh.Text())
+		}
+		for scannerTw.Scan() {
+			set.Add(scannerTw.Text())
+		}
+		for scannerHk.Scan() {
+			set.Add(scannerHk.Text())
 		}
 		return set
 	} else {
@@ -31,6 +41,14 @@ func readDictionary() *tools.Set {
 }
 
 func wordSegmentation(subSentence string, dictionary *tools.Set, root *Tree) {
+	// build a tree
+	// if word found in dictionary, then make the current word as root
+	// and left subtree is string[:foundWordStartIndex]
+	// right subtree is string[foundWordEndIndex:]
+	// keep using n-gram for every node of subtrees
+
+	// and last, output the tree by using Inorder fashion
+	// you will get the segmented result
 	if len(subSentence) < 2 {
 		return
 	}
@@ -58,17 +76,10 @@ func wordSegmentation(subSentence string, dictionary *tools.Set, root *Tree) {
 			}
 		}
 	}
-	// use n-gram, build a tree
-	// if word found in dictionary, then make the current word as root
-	// and left subtree is string[:foundWordStartIndex]
-	// right subtree is string[foundWordEndIndex:]
-	// keep using n-gram for every node of subtrees
-
-	// and last, output the tree by using Inorder fashion
-	// you will get the segmented result
 }
 
 func scanInput() string {
+	fmt.Print("Sentence: ")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	return scanner.Text()
@@ -115,23 +126,30 @@ func convertToStringArray(regex *regexp.Regexp, sentence string) []string {
 }
 
 func main() {
-	// 早上好，現在我有Ice Cream，Mi-2S還有個老頭喜歡BB。
-	// 大家好，我是盧文祥老師，我來自Mi-2S實驗室，我是一個超亮亮的老師，最喜歡帶著同學做沒有用的Project，然後不斷地改A改，超爽der
-
 	dictionary := readDictionary()
 	sentence := scanInput()
+	fmt.Println("Result: ")
 	regex, _ := regexp.Compile("[A-Za-z0-9 -]+")
-
+	// break sentence into several pieces
+	// sentence -> English|(Zh, Tw, Hk) -> (Zh, Tw, Hk) fragments
 	splitEnglishAndOtherLanguage := convertToStringArray(regex, sentence)
-	for _, e := range splitEnglishAndOtherLanguage {
-		if regex.MatchString(e) {
-			fmt.Print(e, " | ")
+	for _, chineseSentence := range splitEnglishAndOtherLanguage {
+		if regex.MatchString(chineseSentence) {
+			fmt.Print(chineseSentence, " | ")
 		} else {
-			// perform word segmentation
-			segmentationTree := &Tree{}
-			wordSegmentation(e, dictionary, segmentationTree)
-			inOrderTraverseTree(segmentationTree)
+			regexChinesePunctuation, _ := regexp.Compile("[，。、]")
+			splitByChinesePunctuation := convertToStringArray(regexChinesePunctuation, chineseSentence)
+			for _, chineseFragment := range splitByChinesePunctuation {
+				if regexChinesePunctuation.MatchString(chineseFragment) {
+					fmt.Print(chineseFragment, " | ")
+				} else {
+					// perform word segmentation
+					segmentationTree := &Tree{}
+					wordSegmentation(chineseFragment, dictionary, segmentationTree)
+					inOrderTraverseTree(segmentationTree)
+				}
+			}
+
 		}
-		//fmt.Println(i, len(e))
 	}
 }
